@@ -1,0 +1,296 @@
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Utimate Beverage Warmer</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      .center-fit {
+        max-width: 100%;
+        max-height: 100vh;
+        margin: auto;
+      }
+    </style>
+  </head>
+
+  <body style="background-color:#FFFFFF; font-family:verdana;" onload="init();">
+    <canvas id='warmer' class='center-fit'></canvas>
+    <script>
+
+      // Tons of global variables...  so sue me.
+      var date_time_str
+      var canvas
+      var fudge = 8 
+      var w = 1
+      var h = 1
+      var button_red = { x: 10, y: 10 }
+      var button_green = { x: 20, y: 20 }
+      var button_radius = 1
+      var warmer_img = undefined
+      var image_loaded = false
+      var updater = undefined
+      var update_interval_msec = 500
+      var current_state = ''
+      var state_url = '/state'
+      var button_url = '/button/'
+      var temp_c = 25.0
+      var temp_f = 77.0
+      var temp_color = '#0000ff'
+      var time_sec = 0.0
+      var last_message = 0
+
+      // Get the canvas object, and handle mousedown events on it, and more...
+      function init() {
+        // Get a reference to the canvas object in the body
+        canvas = document.getElementById('warmer')
+        // Set up event handling
+        canvas.onmousedown = function(e) {
+          var loc = windowToCanvas(canvas, e.clientX, e.clientY);
+          // console.log(loc)
+          var button = ''
+          if (image_loaded && distance(loc, button_red) <= button_radius) {
+            // console.log("Red button was pressed!")
+            button = 'red'
+          } else if (image_loaded && distance(loc, button_green) <= button_radius) {
+            // console.log("Green button was pressed!")
+            button = 'green'
+          }
+          if (button != '') {
+            var xhttpr = new XMLHttpRequest()
+            xhttpr.open('POST', '/button/' + button, true)
+            xhttpr.setRequestHeader('Content-Type', 'text/html; charset=utf-8')
+            xhttpr.addEventListener('error', () => console.log('Thw warmer did not accept the button press.'))
+            xhttpr.send()
+          }
+        }
+        // Handle window initial sizing & drawing (and any resizing in future)
+        resizeCanvas()
+        window.addEventListener('resize', resizeCanvas, false)
+        // Start the update cycle
+        updater = setInterval(updateCanvas, update_interval_msec)
+        // Load the background image
+        warmer_img = new Image()
+        warmer_img.src = '/images/warmer.png'
+        // When loaded, update the canvas
+        warmer_img.onload = function() {
+          image_loaded = true
+          updateCanvas()
+        }
+      }
+
+      // Resize/reshape the cnvas whenever the window changes size/shape
+      function resizeCanvas() {
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+        // console.log("RESIZING: h=" + canvas.height + ", w=" + canvas.width)
+        updateCanvas()
+      }
+
+      // Compute euclidian distance between 2 points (for button hit detection)
+      function distance(p1, p2) {
+        var a = Math.abs(p1.x - p2.x)
+        var b = Math.abs(p1.y - p2.y)
+        return Math.hypot(a, b)
+      }
+
+      // Convert window coordinates to canvas coordinates
+      function windowToCanvas(canvas, x, y) {
+        var bbox = canvas.getBoundingClientRect()
+        return { x: x - bbox.left * (canvas.width  / bbox.width),
+                 y: y - bbox.top  * (canvas.height / bbox.height) }
+      }
+
+      // Convert a numeric scalar into a string with exactly one decimal place
+      function format_float(n) {
+        n = Math.round(10.0 * n) / 10.0
+        s = '' + n
+        if (n == Math.floor(n)) { s += '.0' }
+        return s
+      }
+
+      // Convert hours, minutes, seconds into hh:mm:ss
+      function format_time(time_sec) {
+        var h = Math.floor(time_sec / 3600)
+        var m = Math.floor((time_sec - h * 3600) / 60)
+        var s = Math.round(time_sec) % 60
+        // console.log("h=" + h + ", m=" + m + ", s=" + s)
+        var h_str = ''
+        if (h > 0) {
+          h_str = h + ':'
+        }
+        var m_str = ''
+        if (time_sec > 60.0) {
+          m_str = ('00' + m + ':').slice(-3)
+        }
+        var s_str = time_sec + 'seconds'
+        if (time_sec > 9.9) {
+          s_str = ('00' + s).slice(-2)
+        }
+        var time_str = h_str + m_str + s_str
+        // console.log("hs=" + h_str + ", ms=" + m_str + ", ss=" + s_str + ", ts: \"" + time_str + "\"")
+        return time_str
+      }
+
+      // Compute canvas metrics based on current size/shape, and draw the photo
+      function drawWarmer(ctx) {
+        if (canvas.width > canvas.height) {
+          // Wide screen
+          var aspect = warmer_img.width / warmer_img.height
+          h = canvas.height - 2 * fudge
+          w = h * aspect
+        } else {
+          // Tall screen
+          var aspect_inv = warmer_img.height / warmer_img.width
+          w = canvas.width - 2 * fudge
+          h = w * aspect_inv
+        }
+        // console.log("DRAWING: h=" + h + ", w=" + w)
+        ctx.drawImage(warmer_img, fudge, 0, w, h)
+        red_x = 0.42
+        green_x = 0.67
+        button_y = 0.83
+        button_dia_h = 0.095
+        button_red = { x: fudge + red_x * w, y: button_y * h }
+        button_green = { x: fudge + green_x * w, y: button_y * h }
+        button_radius = (button_dia_h * h) / 2
+        // console.log(button_red)
+        // console.log(button_green)
+        // console.log('r = ' + button_radius)
+      }
+
+      // Update the global variables from a state object received from REST
+      function updateState() {
+        // For debugging (dump state to console)
+        // console.log(this.responseText)
+        // Example state record:
+        //   {
+        //     "state": {
+        //       "temp_c":56.7,
+        //       "temp_color":"#966900",
+        //       "time_sec":0.0
+        //     }
+        //   }
+        // Parse and store the values
+        var state = JSON.parse(this.responseText);
+        temp_c = state.state.temp_c
+        temp_f = 32.0 + temp_c * 9.0 / 5.0
+        temp_color = state.state.temp_color
+        time_sec = state.state.time_sec
+        // Store the time that this message was received
+        last_message = new Date()
+        date_time_str = last_message.toLocaleDateString() + ' ' + last_message.toLocaleTimeString()
+      }
+
+      // Draw everything onto the canvas
+      function updateCanvas() {
+
+        // Get current state from the REST API
+        var xhttpr = new XMLHttpRequest() 
+        xhttpr.open("GET", state_url, true)
+        xhttpr.addEventListener('load', updateState)
+        xhttpr.addEventListener('error', () => console.log('Request for current state of the warmer has failed.'))
+        xhttpr.send()
+
+        // Get the drawing context
+        var ctx = canvas.getContext('2d')
+
+        // First, clear the screen for this frame
+        //ctx.fillStyle = '#ffffff'
+        //ctx.fillRect(0, 0, canvas.width, canvas.height)
+        
+        // Draw the background image
+        if (image_loaded) {
+          drawWarmer(ctx)
+        }
+
+        // Check if still in contact with the beverage warmer machine
+        var now = new Date();
+        var max_secs_without_msgs = 5
+        var connected = (((now - last_message) / 1000.0) <= max_secs_without_msgs)
+        if (connected) {
+
+          // Since we are connected, show the "ready" LED
+          var ready_led_top = 0.8279
+          var ready_led_left = 0.231
+          var ready_led_diameter = 0.01
+          ctx.fillStyle = '#0060ff'
+          ctx.beginPath()
+          ctx.arc(ready_led_left * w, ready_led_top * h, ready_led_diameter * h, 0, Math.PI*2, false)
+          ctx.closePath()
+          ctx.fill();
+
+          // Draw the temperature values onto the heatpad area
+          var temp_F_str = format_float(temp_f) + 'F'
+          var temp_C_str = '(' + format_float(temp_c) + 'C)'
+          var temp_text_fill = temp_color
+          var temp_font_size_px = h / 10
+          // ...
+          var temp_gauge_circle_x = 0.55
+          var temp_gauge_circle_y = 0.30
+          var temp_x = w * temp_gauge_circle_x
+          var temp_y = h * temp_gauge_circle_y
+          ctx.font = (temp_font_size_px + 'px Arial')
+          ctx.fillStyle = temp_text_fill
+          ctx.textAlign = 'center'
+          ctx.fillText(temp_F_str, temp_x, temp_y - temp_font_size_px / 1.9)
+          ctx.fillText(temp_C_str, temp_x, temp_y + temp_font_size_px / 1.9)
+ 
+          // Draw the time gauge *background* in the neopixel area
+          var time_background_fill = temp_color
+          // ...
+          var time_font_size_px = h / 30
+          var time_gauge_rect_top = 0.5115
+          var time_gauge_rect_height = 0.0725
+          var time_gauge_rect_left = 0.391
+          var time_gauge_rect_width = 0.32
+          var time_top = h * time_gauge_rect_top
+          var time_left = w * time_gauge_rect_left
+          var time_h = h * time_gauge_rect_height
+          var time_w = w * time_gauge_rect_width
+          var time_h2 = time_h / 2
+          ctx.fillStyle = time_background_fill
+          ctx.fillRect(time_left, time_top, time_w, time_h)
+          ctx.beginPath()
+          ctx.arc(time_left, time_top + time_h2, time_h2, 0, Math.PI*2, false)
+          ctx.closePath()
+          ctx.fill();
+          ctx.beginPath()
+          ctx.arc(time_left + time_w, time_top + time_h2, time_h2, 0, Math.PI*2, false)
+          ctx.closePath()
+          ctx.fill();
+  
+          // Draw the time remaining *text* in the neopixel area
+          var time_str = '(off)'
+          if (time_sec > 0.001) {
+            time_str = 'ON (off in ' + format_time(time_sec) + ')'
+          }
+          // console.log(time_str)
+          var time_text_fill = '#000000'
+          var time_font_size_px = h / 30
+          // ...
+          ctx.font = (time_font_size_px + 'px Arial')
+          ctx.fillStyle = time_text_fill
+          ctx.textAlign = 'center'
+          ctx.fillText(time_str, time_left + time_w / 2, time_top + time_h - time_font_size_px / 1.40)
+        }
+
+        // Show date/time of last message (an indicator of normal operation)
+        var date_text_size_px = h / 46
+        ctx.font = (date_text_size_px + 'px Arial')
+        ctx.fillStyle = 'gray'
+        ctx.textAlign = 'center'
+        ctx.fillText(date_time_str, w / 2 + fudge, h - date_text_size_px)
+      }
+
+    </script>
+  </body>
+</html>
