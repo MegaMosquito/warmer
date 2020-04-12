@@ -23,7 +23,11 @@
 
 The circuitry is shown in the [Fritzing}(http://fritzing.org/home/) document, `circuit.fzz` in this directory.
 
-# 3D Models
+This is what mine looks like inside:
+
+![Warmer Insides](https://raw.githubusercontent.com/MegaMosquito/warmer/master/images/insides.jpg)
+
+## 3D Models
 
 The 3D models I used for this are here: https://www.tinkercad.com/things/cyHb59UzV8j
 
