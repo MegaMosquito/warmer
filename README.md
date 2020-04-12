@@ -1,4 +1,6 @@
-# Warmer -- Software For The Ultimate Beverage Warming Hardware
+# Warmer -- Software For The Ultimate Cup Warmer!
+
+![Warmer In Use](https://raw.githubusercontent.com/MegaMosquito/warmer/master/images/warmer.jpg)
 
 ## Parts
 
