@@ -33,6 +33,12 @@ The 3D models I used for this are here: https://www.tinkercad.com/things/cyHb59U
 
 ## Software
 
+The software monitors the buttons, and acts accordingly to increase or decrease the timeout for the cup warmer. It also monitors the thermistor to know the current temperature of the warming plate (I epoxy-ed the thermistor onto the bottom on the metal heating plate near the heating element). The software also displays the current temperature of the heating plate by using color on the NeoPixel LEDs (red is hottest, through organe, yellow, green. to blue, the coldest). It also shows the time remaining on the NeoPixels by making the leftmost "N" of them much brighter than the others (i.e., same color, but brighter) to indicate "N" time units remaining.
+
+The software also presents a "digital twin" web UI that looks like the real object, and whose buttons and LEDs function the same as the physical object. The digital twin also shows the precise temperature, and the precise amount of time remaining. Here is an image of the web UI in operation:
+
+![Warmer Web UI](https://raw.githubusercontent.com/MegaMosquito/warmer/master/images/webui.png)
+
 Create a `/home/pi/git` directory, then clone this repository into there. Enter this directory, then build and run the Docker container:
 
 ```
