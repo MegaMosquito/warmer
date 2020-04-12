@@ -5,6 +5,7 @@
 ## Parts
 
 - Mr. Coffee Mug Warmer (https://smile.amazon.com/gp/product/B000CO89T8/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1)
+- plastic box (I used a Serpac enclosures, 6.88 x 4.88 x .92, but they don't sell that on Amazon any more. I think [this enclosure](https://smile.amazon.com/Serpac-171-Plastic-Enclosure-Length/dp/B00B88CC0Y/ref=sr_1_fkmr2_1?dchild=1&keywords=serpac+Enclosures%2C+Boxes%2C+%26+Cases+6.88+x+4.88+x+.92+Black&qid=1586725240&sr=8-1-fkmr2) would work well though. Or you could 3D print something.
 - RPi ZeroW
 - MCP3008
 - 2N2222 transistor
