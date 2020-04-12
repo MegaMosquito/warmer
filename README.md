@@ -37,7 +37,7 @@ The software monitors the buttons, and acts accordingly to increase or decrease 
 
 The software also presents a "digital twin" web UI that looks like the real object, and whose buttons and LEDs function the same as the physical object. The digital twin also shows the precise temperature, and the precise amount of time remaining. Here is an image of the web UI in operation:
 
-![Warmer Web UI](https://raw.githubusercontent.com/MegaMosquito/warmer/master/images/webui.png)
+![Warmer Web UI](https://raw.githubusercontent.com/MegaMosquito/warmer/master/images/webui.jpg)
 
 Create a `/home/pi/git` directory, then clone this repository into there. Enter this directory, then build and run the Docker container:
 
