@@ -325,8 +325,7 @@ def send_state():
   return '{"state":' + current_state + '}'
 @app.route("/", methods=['GET'])
 def send_root():
-  # return open('/usr/src/app/html/index.html').read()
-  return send_file('/outside/html/index.html')
+  return send_file('/usr/src/app/html/index.html')
 @app.route('/button/red', methods=['POST'])
 def press_button_red():
   press_button('red')

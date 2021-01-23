@@ -11,7 +11,7 @@ dev: build
 
 run:
 	-docker rm -f warmer 2> /dev/null || :
-	docker run -d --privileged --name warmer --publish=80:5000 --volume `pwd`:/outside warmer
+	docker run -d --privileged --restart unless-stopped --name warmer --publish=80:5000 warmer
 
 exec:
 	docker exec -it warmer /bin/sh
